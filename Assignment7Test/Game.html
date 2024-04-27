@@ -1,0 +1,733 @@
+<head>
+	<title>Pacman Game</title>
+	<meta charset="UTF-8">
+</head>
+<body>
+<br>
+<canvas id="myCanvas" width="600" height="600"></canvas>
+
+<script type="text/javascript">
+
+class Sprite {
+    constructor(x, y, w, h, image_url) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+        this.h = h;
+        this.image = new Image();
+        this.imageLoaded = false;  // Initialize imageLoaded to false
+        if (image_url) {
+            this.setImage(image_url);
+        }
+    }
+
+    setImage(image_url) {
+        this.image.onload = () => {
+            this.imageLoaded = true;  // Set to true once the image is loaded
+        };
+        this.image.src = image_url;  // Use image_url consistently
+    }
+	draw(ctx) {
+        if (this.imageLoaded) {
+            ctx.drawImage(this.image, this.x, this.y, this.w, this.h);
+        }
+    }
+	//Sprite methods
+	isMoving() // method for checking if a sprite is moving
+	{
+	    return false;
+	}
+	isGhost()
+	{
+	    return false;
+	} //Step 6: added method that will allow us to know if some sprite is a ghost
+	isWall() //Step 3: added method that will allow us to know if some sprite is a wall 
+	{
+	    return false;
+	}
+	isPacman() //Step 3: added method that will allow us to know if some sprite is a pacman 
+	{
+	    return false;
+	}
+	isPellet()
+	{
+	    return false; 
+	}
+		doesCollide(otherSprite)  //Wall collision check
+	 {
+	     if (this.x + this.w < otherSprite.x) //Chek if it is !(that Pacmans current right (x + w) is less than wall's left) If it is true, then collision. 
+	     {
+	         return false;
+	        } 
+	    if (this.x > otherSprite.x + otherSprite.w) //Chek if it is !(that Pacmans current right (x + w) is less than wall's left) If it is true, then collision. 
+	        {
+	            return false; 
+	        }
+	    if (this.y+ this.h < otherSprite.y) //Chek if it is !(that Pacmans current left is greater than wall's right (x + w)). If it is true, then collision. 
+	        {
+	            return false;
+	        } 
+	    if (this.y > otherSprite.y + otherSprite.h) //Check if it is !(that Pacmans bottom is less than wall's top). If it is, then collision.
+	        {
+	            return false;
+	        }   	
+	        
+		return true; //A collision IS detected
+	}
+		
+}
+class Model
+{
+	constructor() {
+        this.sprites = [];
+		this.addSprites = [];
+		this.removeSprites = []; 
+        this.loadGame();
+		this.pacman = new Pacman(0, 0, 30, 30); // Make sure the path and parameters are correct
+        this.sprites.push(this.pacman);
+    }
+	loadGame() {
+    const wallsData = [
+    {x: 460, y: 0, w: 20, h: 20},
+    {x: 480, y: 0, w: 20, h: 20},
+    {x: 500, y: 0, w: 20, h: 20},
+    {x: 400, y: 0, w: 20, h: 20},
+    {x: 380, y: 0, w: 20, h: 20},
+    {x: 360, y: 0, w: 20, h: 20},
+    {x: 340, y: 0, w: 20, h: 20},
+    {x: 500, y: 60, w: 20, h: 20},
+    {x: 480, y: 60, w: 20, h: 20},
+    {x: 460, y: 60, w: 20, h: 20},
+    {x: 60, y: 0, w: 20, h: 20},
+    {x: 80, y: 0, w: 20, h: 20},
+    {x: 100, y: 0, w: 20, h: 20},
+    {x: 160, y: 0, w: 20, h: 20},
+    {x: 180, y: 0, w: 20, h: 20},
+    {x: 200, y: 0, w: 20, h: 20},
+    {x: 220, y: 0, w: 20, h: 20},
+    {x: 280, y: 0, w: 20, h: 20},
+    {x: 280, y: 20, w: 20, h: 20},
+    {x: 100, y: 60, w: 20, h: 20},
+    {x: 80, y: 60, w: 20, h: 20},
+    {x: 60, y: 60, w: 20, h: 20},
+    {x: 220, y: 60, w: 20, h: 20},
+    {x: 240, y: 60, w: 20, h: 20},
+    {x: 260, y: 60, w: 20, h: 20},
+    {x: 280, y: 60, w: 20, h: 20},
+    {x: 300, y: 60, w: 20, h: 20},
+    {x: 320, y: 60, w: 20, h: 20},
+    {x: 340, y: 60, w: 20, h: 20},
+    {x: 280, y: 80, w: 20, h: 20},
+    {x: 280, y: 100, w: 20, h: 20},
+    {x: 160, y: 140, w: 20, h: 20},
+    {x: 160, y: 120, w: 20, h: 20},
+    {x: 160, y: 100, w: 20, h: 20},
+    {x: 160, y: 80, w: 20, h: 20},
+    {x: 180, y: 120, w: 20, h: 20},
+    {x: 200, y: 120, w: 20, h: 20},
+    {x: 160, y: 160, w: 20, h: 20},
+    {x: 400, y: 100, w: 20, h: 20},
+    {x: 400, y: 120, w: 20, h: 20},
+    {x: 400, y: 140, w: 20, h: 20},
+    {x: 400, y: 160, w: 20, h: 20},
+    {x: 400, y: 80, w: 20, h: 20},
+    {x: 380, y: 120, w: 20, h: 20},
+    {x: 360, y: 120, w: 20, h: 20},
+    {x: 220, y: 220, w: 20, h: 20},
+    {x: 200, y: 220, w: 20, h: 20},
+    {x: 200, y: 240, w: 20, h: 20},
+    {x: 200, y: 260, w: 20, h: 20},
+    {x: 200, y: 280, w: 20, h: 20},
+    {x: 220, y: 280, w: 20, h: 20},
+    {x: 240, y: 280, w: 20, h: 20},
+    {x: 260, y: 280, w: 20, h: 20},
+    {x: 280, y: 280, w: 20, h: 20},
+    {x: 300, y: 280, w: 20, h: 20},
+    {x: 320, y: 280, w: 20, h: 20},
+    {x: 340, y: 280, w: 20, h: 20},
+    {x: 360, y: 280, w: 20, h: 20},
+    {x: 360, y: 260, w: 20, h: 20},
+    {x: 360, y: 240, w: 20, h: 20},
+    {x: 360, y: 220, w: 20, h: 20},
+    {x: 340, y: 220, w: 20, h: 20},
+    {x: 320, y: 220, w: 20, h: 20},
+    {x: 240, y: 220, w: 20, h: 20},
+    {x: 400, y: 320, w: 20, h: 20},
+    {x: 400, y: 340, w: 20, h: 20},
+    {x: 400, y: 360, w: 20, h: 20},
+    {x: 160, y: 360, w: 20, h: 20},
+    {x: 160, y: 340, w: 20, h: 20},
+    {x: 160, y: 320, w: 20, h: 20},
+    {x: 340, y: 360, w: 20, h: 20},
+    {x: 320, y: 360, w: 20, h: 20},
+    {x: 300, y: 360, w: 20, h: 20},
+    {x: 260, y: 360, w: 20, h: 20},
+    {x: 280, y: 360, w: 20, h: 20},
+    {x: 240, y: 360, w: 20, h: 20},
+    {x: 220, y: 360, w: 20, h: 20},
+    {x: 280, y: 380, w: 20, h: 20},
+    {x: 280, y: 400, w: 20, h: 20},
+    {x: 380, y: 420, w: 20, h: 20},
+    {x: 400, y: 420, w: 20, h: 20},
+    {x: 180, y: 420, w: 20, h: 20},
+    {x: 160, y: 420, w: 20, h: 20},
+    {x: 0, y: 220, w: 20, h: 20},
+    {x: 0, y: 200, w: 20, h: 20},
+    {x: 0, y: 180, w: 20, h: 20},
+    {x: 0, y: 320, w: 20, h: 20},
+    {x: 0, y: 340, w: 20, h: 20},
+    {x: 0, y: 360, w: 20, h: 20},
+    {x: 580, y: 180, w: 20, h: 20},
+    {x: 580, y: 200, w: 20, h: 20},
+    {x: 580, y: 220, w: 20, h: 20},
+    {x: 580, y: 320, w: 20, h: 20},
+    {x: 580, y: 360, w: 20, h: 20},
+    {x: 580, y: 340, w: 20, h: 20},
+    {x: 100, y: 520, w: 20, h: 20},
+    {x: 80, y: 520, w: 20, h: 20},
+    {x: 120, y: 520, w: 20, h: 20},
+    {x: 140, y: 520, w: 20, h: 20},
+    {x: 160, y: 520, w: 20, h: 20},
+    {x: 180, y: 520, w: 20, h: 20},
+    {x: 140, y: 500, w: 20, h: 20},
+    {x: 140, y: 480, w: 20, h: 20},
+    {x: 480, y: 520, w: 20, h: 20},
+    {x: 460, y: 520, w: 20, h: 20},
+    {x: 440, y: 520, w: 20, h: 20},
+    {x: 420, y: 520, w: 20, h: 20},
+    {x: 420, y: 520, w: 20, h: 20},
+    {x: 420, y: 500, w: 20, h: 20},
+    {x: 420, y: 480, w: 20, h: 20},
+    {x: 400, y: 520, w: 20, h: 20},
+    {x: 380, y: 520, w: 20, h: 20},
+    {x: 280, y: 520, w: 20, h: 20},
+    {x: 280, y: 500, w: 20, h: 20},
+    {x: 280, y: 480, w: 20, h: 20},
+    {x: 300, y: 480, w: 20, h: 20},
+    {x: 320, y: 480, w: 20, h: 20},
+    {x: 340, y: 480, w: 20, h: 20},
+    {x: 260, y: 480, w: 20, h: 20},
+    {x: 240, y: 480, w: 20, h: 20},
+    {x: 220, y: 480, w: 20, h: 20},
+    {x: 60, y: 140, w: 20, h: 20},
+    {x: 80, y: 140, w: 20, h: 20},
+    {x: 60, y: 120, w: 20, h: 20},
+    {x: 80, y: 120, w: 20, h: 20},
+    {x: 500, y: 140, w: 20, h: 20},
+    {x: 500, y: 120, w: 20, h: 20},
+    {x: 480, y: 120, w: 20, h: 20},
+    {x: 480, y: 140, w: 20, h: 20},
+    {x: 580, y: 440, w: 20, h: 20},
+    {x: 580, y: 460, w: 20, h: 20},
+    {x: 580, y: 540, w: 20, h: 20},
+    {x: 580, y: 560, w: 20, h: 20},
+    {x: 0, y: 440, w: 20, h: 20},
+    {x: 0, y: 460, w: 20, h: 20},
+    {x: 0, y: 540, w: 20, h: 20},
+    {x: 0, y: 560, w: 20, h: 20},
+    {x: 520, y: 260, w: 20, h: 20},
+    {x: 500, y: 260, w: 20, h: 20},
+    {x: 480, y: 260, w: 20, h: 20},
+    {x: 460, y: 260, w: 20, h: 20},
+    {x: 120, y: 260, w: 20, h: 20},
+    {x: 100, y: 260, w: 20, h: 20},
+    {x: 80, y: 260, w: 20, h: 20},
+    {x: 60, y: 260, w: 20, h: 20},
+    {x: 480, y: 360, w: 20, h: 20},
+    {x: 500, y: 360, w: 20, h: 20},
+    {x: 500, y: 340, w: 20, h: 20},
+    {x: 480, y: 340, w: 20, h: 20},
+    {x: 100, y: 360, w: 20, h: 20},
+    {x: 100, y: 340, w: 20, h: 20},
+    {x: 80, y: 340, w: 20, h: 20},
+    {x: 80, y: 360, w: 20, h: 20}
+]
+
+
+	wallsData.forEach(wall => {
+            this.sprites.push(new Wall(wall.x, wall.y, wall.w, wall.h, 'wall.png'));
+
+        })
+	const pelletPositions = [
+            { x: 110, y: 125, image: 'Pellet.png' },
+            { x: 50, y: 200, image: 'Pellet.png' },
+            { x: 150, y: 250, image: 'Pellet.png' },
+            { x: 300, y: 310, image: 'Pellet.png' },
+            { x: 50, y: 890, image: 'Pellet.png' }
+        ];
+	const fruitPositions = [
+            { x: 25, y: 200, image: 'fruit1.png' },
+            { x: 300, y: 110, image: 'fruit2.png' },
+            { x: 65, y: 75, image: 'fruit3.png' },
+            { x: 206, y: 54, image: 'fruit4.png' },
+            { x: 80, y: 600, image: 'fruit5.png' }
+		];
+    pelletPositions.forEach(pellet => {
+         this.addPellets(pellet.x, pellet.y, pellet.image);
+    });
+
+	fruitPositions.forEach(fruit => {
+         this.addFruits(fruit.x, fruit.y, fruit.image);
+    });
+	}
+
+	
+	addPellets(x, y, image_url) {
+         const pellet = new Pellet(x, y, image_url);
+        this.sprites.push(pellet);
+    }
+	addFruits(x, y, image_url) {
+		const fruit = new Fruit(x, y, image_url);
+		this.sprites.push(fruit);
+	}
+	getPacman() {
+		return this.pacman;
+	}
+  update() {
+        this.addSprites.forEach(sprite => {
+            this.sprites.push(sprite);
+        });
+        this.addSprites = []; // Clear the addSprites array
+
+        this.sprites.forEach(sprite => {
+            if (sprite.update) {
+				sprite.update()
+                // If update returns false, schedule the sprite for removal
+            }
+        });
+
+        //Collision
+        this.sprites.forEach(sprite1 => {
+            this.sprites.forEach(sprite2 => {
+                // Check if sprite is not moving and remove
+                if (!sprite1.isMoving()) {
+                    // sprite1.remove();
+                }
+                if (sprite1 !== sprite2 && sprite1.doesCollide(sprite2)) { //Check if sprite1 isn't itself
+                    if (sprite1 instanceof Pacman && sprite2 instanceof Wall) {
+                        sprite1.getOutOfWall(sprite2);
+                    }
+                } else if (sprite1 instanceof Pacman && sprite2 instanceof Pellet) {
+                    sprite2.eatPellet();
+					 if (!sprite2.isValid) {
+        this.removeSprites.push(sprite2);  // Add to removal list if using the first method
+    }
+            }
+        })
+     });
+}
+}
+	
+	class View {
+   constructor(model) {
+        this.model = model;
+        this.canvas = document.getElementById("myCanvas");
+	    this.ctx = this.canvas.getContext("2d");
+    }
+
+    clearAndFillCanvas() {
+        // Clear the canvas
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Set the fill style to light yellow and fill the canvas
+        this.ctx.fillStyle = 'rgb(255, 255, 204)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    update() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    // Reapply the background color
+	    this.ctx.fillStyle = 'rgb(255, 255, 204)';
+	    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this.model.sprites.forEach(sprite => {
+                sprite.draw(this.ctx); //each sprite will draw itself 
+        });
+    }
+}
+
+class Controller
+{
+	constructor(model, view)
+	{
+		this.model = model;
+		this.view = view;
+		this.key_right = false;
+		this.key_left = false;
+		this.key_up = false;
+		this.key_down = false;
+		let self = this;
+		document.addEventListener('keydown', function(event) { self.keyDown(event); }, false);
+		document.addEventListener('keyup', function(event) { self.keyUp(event); }, false);
+		document.addEventListener('click', (event) => this.onClick(event));
+		this.addPellets = false;
+		this.addMode = false
+		this.editMode = false
+		this.addFruits = false; 
+	}
+
+	keyDown(event) {
+        switch (event.keyCode) {
+            case 39: // Right arrow
+                this.key_right = true;
+                break;
+            case 37: // Left arrow
+                this.key_left = true;
+                break;
+            case 38: // Up arrow
+                this.key_up = true;
+                break;
+            case 40: // Down arrow
+                this.key_down = true;
+                break;
+            case 69: // 'E' key for toggle edit mode
+                this.toggleEditMode();
+                break;
+            case 80: // 'P' key for toggle adding pellets
+				if (this.editMode == true) {this.addPellets = true}
+				break;
+			case 70: 
+				
+		}
+		this.update()
+	}
+	toggleEditMode()
+	{
+		this.editMode = !this.editMode
+	}
+	 onClick(event) {
+        if (!this.editMode && !this.addMode && !this.addPelletsMode) {
+            const x = event.clientX - this.view.canvas.offsetLeft;
+            const y = event.clientY - this.view.canvas.offsetTop;
+            this.model.addPellets(x, y);
+            this.view.update(); // Redraw the view to show the new pellet
+        }
+    }
+
+	
+   keyUp(event) {
+        switch (event.keyCode) {
+            case 39: this.key_right = false; break;
+            case 37: this.key_left = false; break;
+            case 38: this.key_up = false; break;
+            case 40: this.key_down = false; break;
+        }
+        this.update();
+    }
+
+	update() {
+		this.model.pacman;
+		this.model.pacman.storePrevPos()
+	    if (this.key_right) {
+	        this.model.pacman.setDirection(2);
+	        this.model.pacman.move();
+		    this.model.pacman.updateAnimation();
+	    } else if (this.key_left) {
+	        this.model.pacman.setDirection(1);
+	        this.model.pacman.move();
+	        this.model.pacman.updateAnimation();
+	    } else if (this.key_down) {
+	        this.model.pacman.setDirection(0);
+	        this.model.pacman.move();
+	        this.model.pacman.updateAnimation();
+	    } else if (this.key_up) {
+	        this.model.pacman.setDirection(3);
+	        this.model.pacman.move();
+	        this.model.pacman.updateAnimation();
+	    }
+	}
+}
+
+class Wall extends Sprite
+{
+	constructor(x, y, w, h, image_url) {
+	super(x, y, w, h, image_url)
+    }
+	isWall() //Step 3: added method that will allow us to know if some sprite is a wall 
+	{
+	    return true;
+	}
+	update() {
+        
+        return true; 
+    }
+   draw(ctx) {
+		if (this.image.complete) { // Ensure the image is loaded before drawing
+            ctx.drawImage(this.image, this.x, this.y, this.w, this.h);
+        }
+    }
+}
+class Pellet extends Sprite {
+    constructor(x, y) {
+        super(x, y, 20, 20);
+        this.image = new Image();
+        this.imageLoaded = false;
+        this.image.src = 'Pellet.png';
+        this.image.onload = () => {
+            this.imageLoaded = true;
+        };
+        this.isValid = true; 
+    }
+
+    eatPellet() {
+        this.isValid = false; // Set to false when Pacman eats the pellet
+    }
+	update() {
+        
+        return this.isValid; 
+    }
+
+    draw(ctx) {
+        if (this.imageLoaded) {
+            ctx.drawImage(this.image, this.x, this.y, this.w, this.h);
+        }
+    }
+}
+
+class Fruit extends Sprite {
+    constructor(x, y) {
+        super(x, y, 20, 20);
+        this.isValid = true;
+    
+        this.dx = 1;
+        this.dy = 0;
+        this.x = x;
+        this.y = y;
+        this.image.onload = () => {
+            this.imageLoaded = true;
+        };
+        this.isValid = true; 
+    }
+       
+
+    eatFruit() {
+		this.isValid = false;
+    }
+
+
+
+   loadImages() {
+        for (let i = 0; i < 7; i++) {
+            let img = new Image();
+            img.onload = () => {
+                if (i === 6) {
+                    this.imagesLoaded = true;
+                }
+            };
+            img.src = `PacmanImages/fruit${i + 1}.png`;
+            this.pacmanImages.push(img);
+        }
+    }
+
+
+
+     draw(ctx) {
+        if (this.imageLoaded) {
+            ctx.drawImage(this.image, this.x, this.y, this.w, this.h);
+        }
+    }
+
+    checkHorizontalWarping() {
+        const gameWidth = document.getElementById("myCanvas").width;
+        if (this.x < 0) {
+            this.x = 600 - this.w;
+        } else if (this.x + this.w > 600) {
+            this.x = 0;
+        }
+    }
+
+
+
+
+	 fruitCollision(otherSprite) {
+        if (otherSprite.isWall()) {
+            // Teleport if it collides with a wall
+            this.randomizeDirection();
+        } else if (otherSprite.isPacman()) {
+            // If collides with Pacman, the fruit gets eaten and disappears
+            this.eatFruit();
+        }
+    }
+
+	 
+    randomizeDirection() {
+        // Define possible movements: up, right, down, left
+        let directions = [
+            { dx: 0, dy: -1 }, // Up
+            { dx: 1, dy: 0 }, // Right
+            { dx: 0, dy: 1 }, // Down
+            { dx: -1, dy: 0 } // Left
+        ];
+
+        // Randomly choose from the directions
+        const choice = directions[Math.floor(Math.random() * directions.length)];
+        this.dx = choice.dx;
+        this.dy = choice.dy;
+    }
+
+
+
+
+    update() {
+    // Check if the fruit is colliding with a wall
+    if (!this.collidingWithWall) {
+        this.x += this.dx;
+        this.y += this.dy;
+        this.checkHorizontalWarping();
+    }
+
+    return true;
+}
+
+	isFruit() {
+		return true;
+	}
+}
+
+class Pacman extends Sprite {
+    static MAX_IMAGES_PER_DIRECTION = 3;
+    static pacmanImages = [];
+    static imagesLoaded = false;
+
+    constructor(x, y, w, h) {
+        super(x, y, w, h);
+        this.currentImageIndex = 0;
+        this.direction = 0;
+        this.speed = 5; // Define the speed at which Pacman moves
+        this.isValid = true;
+		this.prevX = x
+		this.prevY = y
+		this.moving = false
+        if (Pacman.pacmanImages.length === 0) {
+            Pacman.loadImages();
+        }
+    }
+
+    static loadImages() {
+        for (let i = 0; i < 12; i++) {
+            let img = new Image();
+            img.onload = () => {
+                if (i === 11) {
+                    Pacman.imagesLoaded = true;
+                }
+            };
+            img.src = `zeldaImages/zelda${i + 1}.png`;
+            Pacman.pacmanImages.push(img);
+        }
+    }
+	 draw(ctx) {
+        if (Pacman.imagesLoaded) { 
+            let imageIndex = this.currentImageIndex + this.direction * Pacman.MAX_IMAGES_PER_DIRECTION;
+            let img = Pacman.pacmanImages[imageIndex];
+            if (img.complete) {
+                ctx.drawImage(img, this.x, this.y, this.w, this.h);
+            }
+        }
+    }
+
+    updateAnimation() {
+        this.currentImageIndex++;
+        if (this.currentImageIndex >= Pacman.MAX_IMAGES_PER_DIRECTION) {
+            this.currentImageIndex = 0;
+        }
+    }
+	getOutOfWall(otherSprite) {
+    // Right collision
+    if (this.x + this.w > otherSprite.x && this.prevX + this.w <= otherSprite.x) {
+        this.x = otherSprite.x - this.w;
+        console.log("Collision: Right");
+    }
+    // Left collision
+    else if (this.x < otherSprite.x + otherSprite.w && this.prevX >= otherSprite.x + otherSprite.w) {
+        this.x = otherSprite.x + otherSprite.w; // Corrected to ensure proper positioning
+        console.log("Collision: Left");
+    }
+
+    // Bottom collision
+    if (this.y + this.h > otherSprite.y && this.prevY + this.h <= otherSprite.y) {
+        this.y = otherSprite.y - this.h;
+        console.log("Collision: Bottom");
+    }
+    // Top collision
+   else if (this.y < otherSprite.y + otherSprite.h && this.prevY >= otherSprite.y + otherSprite.h) {
+        this.y = otherSprite.y + otherSprite.h;
+        console.log("Collision: Top");
+    }
+}
+    move() {
+        switch (this.direction) {
+            case 0: // Down
+                this.y += this.speed;
+                break;
+            case 1: // Left
+                this.x -= this.speed;
+                break;
+            case 2: // Right
+                this.x += this.speed;
+                break;
+            case 3: // Up
+                this.y -= this.speed;
+                break;
+        }
+		this.horizontalWarping()
+    }
+	isMoving() {
+		return true
+	}
+	isPacman() {
+		return true
+	}
+	update() {
+        
+        return true; 
+    }
+	
+	 storePrevPos()
+    {
+        this.prevX = this.x; 
+        this.prevY = this.y; 
+    }
+	horizontalWarping() {
+        if (this.x < 0) {
+            this.x = 600 - this.w;
+        } else if (this.x + this.w > 600) {
+            this.x = 0;
+        }
+    }
+    
+    //Setters and Getters
+	setDirection(direction) {
+	        this.direction = direction;
+			this.moving = true
+	}
+	 stop() {
+        this.moving = false;
+        this.currentImageIndex = 0;
+    }
+}
+
+
+class Game
+{
+	constructor()
+	{
+		this.model = new Model();
+		this.view = new View(this.model, "myCanvas");
+		this.controller = new Controller(this.model, this.view);
+	}
+
+	onTimer()
+	{
+		this.controller.update();
+		this.view.update();
+		this.model.update();
+	}
+}
+
+let game = new Game();
+let timer = setInterval(function() { game.onTimer(); }, 40);
+
+</script>
+
+</body>
+
+}
